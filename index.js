@@ -161,7 +161,9 @@ app.post("/webhook", async (req, res) => {
     return res.sendStatus(200);
   }
 });
-
+app.get("/admin-new", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin.html"));
+});
 app.get("/admin", async (req, res) => {
   try {
     const search = (req.query.search || "").trim();
