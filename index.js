@@ -1,16 +1,17 @@
 const express = require("express");
-
+const path = require("path");
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
+app.use("/admin-static", express.static(path.join(__dirname, "public")));
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN || "elysia_verify_token";
 const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID;
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
+const SUPABASE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SITE_URL = "https://elysia-jewellery.com";
 
 function sbHeaders(extra = {}) {
