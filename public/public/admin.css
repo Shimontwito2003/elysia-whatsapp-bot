@@ -1,0 +1,316 @@
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+  background:#111;
+  color:#fff;
+  height:100vh;
+}
+
+.hidden{
+  display:none !important;
+}
+
+.login-screen{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#111;
+}
+
+.login-card{
+  width:420px;
+  max-width:95%;
+  background:#1c1c1c;
+  padding:30px;
+  border-radius:20px;
+  border:1px solid #333;
+}
+
+.login-card h1{
+  margin-bottom:10px;
+  color:#d8ba72;
+}
+
+.login-card p{
+  margin-bottom:20px;
+  color:#aaa;
+}
+
+.login-card input{
+  width:100%;
+  padding:14px;
+  margin-bottom:12px;
+  border:none;
+  border-radius:12px;
+}
+
+.login-card button{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  background:#d8ba72;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.login-error{
+  margin-top:10px;
+  color:#ff5a5a;
+}
+
+.app{
+  display:grid;
+  grid-template-columns:350px 1fr 340px;
+  height:100vh;
+}
+
+.sidebar{
+  background:#181818;
+  border-left:1px solid #2c2c2c;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+.brand{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:20px;
+  border-bottom:1px solid #2c2c2c;
+}
+
+.ghost-btn{
+  background:none;
+  border:1px solid #555;
+  color:white;
+  padding:8px 12px;
+  border-radius:10px;
+}
+
+.tabs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  padding:15px;
+}
+
+.tab{
+  border:none;
+  border-radius:999px;
+  padding:8px 14px;
+  cursor:pointer;
+  background:#2b2b2b;
+  color:white;
+}
+
+.tab.active{
+  background:#d8ba72;
+  color:black;
+}
+
+.search{
+  margin:0 15px 15px;
+  padding:12px;
+  border:none;
+  border-radius:12px;
+}
+
+.chat-list{
+  overflow:auto;
+  flex:1;
+}
+
+.chat-item{
+  padding:15px;
+  border-bottom:1px solid #2a2a2a;
+  cursor:pointer;
+}
+
+.chat-item:hover{
+  background:#222;
+}
+
+.chat-item.active{
+  background:#2f2f2f;
+}
+
+.chat-name{
+  font-weight:bold;
+}
+
+.chat-last{
+  color:#bbb;
+  margin-top:5px;
+  font-size:13px;
+}
+
+.chat{
+  display:flex;
+  flex-direction:column;
+  background:#0f0f0f;
+}
+
+.chat-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:20px;
+  border-bottom:1px solid #2c2c2c;
+}
+
+.chat-actions{
+  display:flex;
+  gap:10px;
+}
+
+.chat-actions button{
+  background:#d8ba72;
+  border:none;
+  padding:10px 14px;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+.viewer-bar{
+  padding:12px 20px;
+  background:#243445;
+  color:white;
+}
+
+.messages-box{
+  flex:1;
+  overflow:auto;
+  padding:20px;
+}
+
+.message{
+  max-width:75%;
+  padding:12px;
+  border-radius:16px;
+  margin-bottom:12px;
+}
+
+.message.customer{
+  background:#252525;
+  margin-right:auto;
+}
+
+.message.agent{
+  background:#d8ba72;
+  color:black;
+  margin-left:auto;
+}
+
+.message-time{
+  font-size:11px;
+  opacity:.7;
+  margin-top:5px;
+}
+
+.reply-box{
+  padding:15px;
+  border-top:1px solid #2c2c2c;
+}
+
+.reply-box textarea{
+  width:100%;
+  height:90px;
+  border:none;
+  border-radius:14px;
+  padding:12px;
+}
+
+.reply-options{
+  margin-top:10px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.reply-options button{
+  background:#d8ba72;
+  border:none;
+  padding:10px 14px;
+  border-radius:10px;
+}
+
+.customer-panel{
+  background:#181818;
+  border-right:1px solid #2c2c2c;
+  overflow:auto;
+  padding:20px;
+}
+
+.customer-panel h3{
+  margin-bottom:20px;
+}
+
+.field{
+  margin-bottom:15px;
+}
+
+.field label{
+  display:block;
+  margin-bottom:5px;
+  color:#ccc;
+}
+
+.field input,
+.field textarea,
+.field select{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:12px;
+}
+
+.customer-actions{
+  display:grid;
+  gap:10px;
+  margin-top:20px;
+}
+
+.customer-actions button{
+  border:none;
+  background:#d8ba72;
+  padding:12px;
+  border-radius:12px;
+  cursor:pointer;
+}
+
+.info-box{
+  margin-top:20px;
+  background:#232323;
+  padding:15px;
+  border-radius:12px;
+}
+
+.internal-notes{
+  padding:15px 20px;
+  background:#2a1f00;
+  border-top:1px solid #5f4d1d;
+}
+
+.empty-state{
+  text-align:center;
+  color:#888;
+  margin-top:100px;
+}
+
+@media(max-width:1200px){
+  .app{
+    grid-template-columns:320px 1fr;
+  }
+
+  .customer-panel{
+    display:none;
+  }
+}
