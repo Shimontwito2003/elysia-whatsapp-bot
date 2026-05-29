@@ -10,6 +10,7 @@ const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
 
 const SITE_URL = "https://elysia-jewellery.com";
 const conversations = {};
+const customerMeta = {};
 
 app.get("/", (req, res) => {
   res.status(200).send("WhatsApp bot is running");
@@ -35,9 +36,7 @@ app.post("/webhook", async (req, res) => {
   try {
     const message = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
 
-    if (!message) {
-      return res.sendStatus(200);
-    }
+    if (!message) return res.sendStatus(200);
 
     const from = message.from;
     const text = message.text?.body || "";
@@ -45,6 +44,7 @@ app.post("/webhook", async (req, res) => {
     const listId = message.interactive?.list_reply?.id;
     const selectedId = buttonId || listId;
 
+    ensureCustomer(from);
     saveMessage(from, text || selectedId || "interactive message", "customer");
 
     if (message.type === "text") {
@@ -66,7 +66,23 @@ app.post("/webhook", async (req, res) => {
 });
 
 app.get("/admin", (req, res) => {
-  const customers = Object.keys(conversations);
+  const search = (req.query.search || "").trim();
+  const status = req.query.status || "all";
+
+  let customers = Object.keys(conversations);
+
+  if (search) {
+    customers = customers.filter((phone) => phone.includes(search));
+  }
+
+  if (status !== "all") {
+    customers = customers.filter((phone) => customerMeta[phone]?.status === status);
+  }
+
+  const total = Object.keys(conversations).length;
+  const newCount = Object.keys(customerMeta).filter((p) => customerMeta[p].status === "new").length;
+  const activeCount = Object.keys(customerMeta).filter((p) => customerMeta[p].status === "active").length;
+  const doneCount = Object.keys(customerMeta).filter((p) => customerMeta[p].status === "done").length;
 
   const html = `
 <!DOCTYPE html>
@@ -74,51 +90,52 @@ app.get("/admin", (req, res) => {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Elysia Admin</title>
+  <title>Elysia CRM</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #111;
       color: #fff;
-      padding: 16px;
+      padding: 14px;
       margin: 0;
     }
     h1 {
       font-size: 24px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
+      color: #d6b56d;
     }
-    .customer {
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .stat {
       background: #1c1c1c;
       border: 1px solid #333;
       border-radius: 12px;
-      padding: 14px;
+      padding: 12px;
+      text-align: center;
+    }
+    .stat strong {
+      display: block;
+      color: #d6b56d;
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+    .filters {
+      background: #1c1c1c;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 12px;
       margin-bottom: 14px;
     }
-    .phone {
-      font-weight: bold;
-      color: #d6b56d;
-      margin-bottom: 10px;
-    }
-    .msg {
-      background: #2a2a2a;
-      padding: 10px;
-      border-radius: 8px;
-      margin: 6px 0;
-      font-size: 14px;
-    }
-    .customer-msg {
-      border-right: 4px solid #d6b56d;
-    }
-    .business-msg {
-      border-right: 4px solid #7da7ff;
-    }
-    textarea {
+    input, select, textarea {
       width: 100%;
-      min-height: 70px;
       border-radius: 8px;
       border: none;
       padding: 10px;
-      margin-top: 10px;
+      margin-top: 8px;
       box-sizing: border-box;
       font-family: Arial, sans-serif;
     }
@@ -133,22 +150,111 @@ app.get("/admin", (req, res) => {
       font-weight: bold;
       cursor: pointer;
     }
+    .customer {
+      background: #1c1c1c;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .phone {
+      font-weight: bold;
+      color: #d6b56d;
+      direction: ltr;
+    }
+    .badge {
+      background: #333;
+      padding: 5px 8px;
+      border-radius: 20px;
+      font-size: 12px;
+    }
+    .important {
+      color: #ffd76a;
+      font-size: 20px;
+    }
+    .msg {
+      background: #2a2a2a;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 6px 0;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .customer-msg {
+      border-right: 4px solid #d6b56d;
+    }
+    .business-msg {
+      border-right: 4px solid #7da7ff;
+    }
+    small {
+      color: #aaa;
+    }
+    .note {
+      background: #161616;
+      border: 1px dashed #555;
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 8px;
+      color: #ddd;
+      white-space: pre-wrap;
+    }
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
     .empty {
       color: #aaa;
       background: #1c1c1c;
       padding: 14px;
       border-radius: 12px;
     }
+    a {
+      color: #d6b56d;
+      text-decoration: none;
+    }
   </style>
 </head>
 <body>
-  <h1>פאנל ניהול Elysia</h1>
+  <h1>Elysia WhatsApp CRM</h1>
+
+  <div class="stats">
+    <div class="stat"><strong>${total}</strong>לקוחות</div>
+    <div class="stat"><strong>${newCount}</strong>חדשים</div>
+    <div class="stat"><strong>${activeCount}</strong>בטיפול</div>
+    <div class="stat"><strong>${doneCount}</strong>טופלו</div>
+  </div>
+
+  <div class="filters">
+    <form method="GET" action="/admin">
+      <input name="search" placeholder="חיפוש לפי מספר טלפון" value="${escapeHtml(search)}" />
+      <select name="status">
+        <option value="all" ${status === "all" ? "selected" : ""}>כל הלקוחות</option>
+        <option value="new" ${status === "new" ? "selected" : ""}>חדש</option>
+        <option value="active" ${status === "active" ? "selected" : ""}>בטיפול</option>
+        <option value="done" ${status === "done" ? "selected" : ""}>טופל</option>
+      </select>
+      <button type="submit">סנן</button>
+    </form>
+    <form method="GET" action="/admin">
+      <button type="submit">רענון</button>
+    </form>
+  </div>
 
   ${
     customers.length === 0
-      ? `<div class="empty">עדיין אין הודעות מלקוחות.</div>`
+      ? `<div class="empty">אין לקוחות להצגה.</div>`
       : customers
           .map((phone) => {
+            const meta = customerMeta[phone] || {};
             const messages = conversations[phone]
               .map(
                 (m) => `
@@ -162,13 +268,58 @@ app.get("/admin", (req, res) => {
 
             return `
               <div class="customer">
-                <div class="phone">${phone}</div>
+                <div class="top">
+                  <div>
+                    <div class="phone">${phone}</div>
+                    <small>עדכון אחרון: ${meta.updatedAt || ""}</small>
+                  </div>
+                  <div>
+                    ${meta.important ? `<span class="important">★</span>` : ""}
+                    <span class="badge">${statusLabel(meta.status)}</span>
+                  </div>
+                </div>
+
                 ${messages}
+
+                ${
+                  meta.note
+                    ? `<div class="note"><strong>הערה פנימית:</strong><br>${escapeHtml(meta.note)}</div>`
+                    : ""
+                }
+
                 <form method="POST" action="/admin/reply">
                   <input type="hidden" name="to" value="${phone}" />
                   <textarea name="message" placeholder="כתוב תשובה ללקוח"></textarea>
                   <button type="submit">שלח תשובה</button>
                 </form>
+
+                <form method="POST" action="/admin/status">
+                  <input type="hidden" name="phone" value="${phone}" />
+                  <select name="status">
+                    <option value="new" ${meta.status === "new" ? "selected" : ""}>חדש</option>
+                    <option value="active" ${meta.status === "active" ? "selected" : ""}>בטיפול</option>
+                    <option value="done" ${meta.status === "done" ? "selected" : ""}>טופל</option>
+                  </select>
+                  <button type="submit">עדכן סטטוס</button>
+                </form>
+
+                <form method="POST" action="/admin/note">
+                  <input type="hidden" name="phone" value="${phone}" />
+                  <textarea name="note" placeholder="הערה פנימית">${escapeHtml(meta.note || "")}</textarea>
+                  <button type="submit">שמור הערה</button>
+                </form>
+
+                <div class="actions">
+                  <form method="POST" action="/admin/important">
+                    <input type="hidden" name="phone" value="${phone}" />
+                    <button type="submit">${meta.important ? "הסר כוכב" : "סמן חשוב"}</button>
+                  </form>
+
+                  <form method="POST" action="/admin/delete" onsubmit="return confirm('למחוק לקוח מהפאנל?')">
+                    <input type="hidden" name="phone" value="${phone}" />
+                    <button type="submit">מחק</button>
+                  </form>
+                </div>
               </div>
             `;
           })
@@ -186,6 +337,7 @@ app.post("/admin/reply", async (req, res) => {
   const message = req.body.message;
 
   if (to && message) {
+    ensureCustomer(to);
     await sendText(to, message);
     saveMessage(to, message, "business");
   }
@@ -193,16 +345,90 @@ app.post("/admin/reply", async (req, res) => {
   res.redirect("/admin");
 });
 
-function saveMessage(phone, text, sender) {
-  if (!conversations[phone]) {
-    conversations[phone] = [];
+app.post("/admin/status", (req, res) => {
+  const phone = req.body.phone;
+  const status = req.body.status;
+
+  if (phone && customerMeta[phone]) {
+    customerMeta[phone].status = status;
+    customerMeta[phone].updatedAt = now();
   }
+
+  res.redirect("/admin");
+});
+
+app.post("/admin/note", (req, res) => {
+  const phone = req.body.phone;
+  const note = req.body.note || "";
+
+  if (phone && customerMeta[phone]) {
+    customerMeta[phone].note = note;
+    customerMeta[phone].updatedAt = now();
+  }
+
+  res.redirect("/admin");
+});
+
+app.post("/admin/important", (req, res) => {
+  const phone = req.body.phone;
+
+  if (phone && customerMeta[phone]) {
+    customerMeta[phone].important = !customerMeta[phone].important;
+    customerMeta[phone].updatedAt = now();
+  }
+
+  res.redirect("/admin");
+});
+
+app.post("/admin/delete", (req, res) => {
+  const phone = req.body.phone;
+
+  if (phone) {
+    delete conversations[phone];
+    delete customerMeta[phone];
+  }
+
+  res.redirect("/admin");
+});
+
+function ensureCustomer(phone) {
+  if (!conversations[phone]) conversations[phone] = [];
+
+  if (!customerMeta[phone]) {
+    customerMeta[phone] = {
+      status: "new",
+      important: false,
+      note: "",
+      createdAt: now(),
+      updatedAt: now(),
+    };
+  }
+}
+
+function saveMessage(phone, text, sender) {
+  ensureCustomer(phone);
 
   conversations[phone].push({
     text,
     sender,
-    time: new Date().toLocaleString("he-IL"),
+    time: now(),
   });
+
+  customerMeta[phone].updatedAt = now();
+
+  if (sender === "customer" && customerMeta[phone].status === "done") {
+    customerMeta[phone].status = "new";
+  }
+}
+
+function statusLabel(status) {
+  if (status === "active") return "בטיפול";
+  if (status === "done") return "טופל";
+  return "חדש";
+}
+
+function now() {
+  return new Date().toLocaleString("he-IL");
 }
 
 function escapeHtml(text) {
