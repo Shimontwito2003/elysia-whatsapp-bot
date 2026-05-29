@@ -163,6 +163,50 @@ app.post("/webhook", async (req, res) => {
 });
 app.get("/admin-new", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin.html"));
+app.post("/api/login", async (req, res) => {
+  try {
+    const username = String(req.body.username || "").trim();
+    const password = String(req.body.password || "").trim();
+
+    if (!username || !password) {
+      return res.json({
+        success: false,
+        message: "יש להזין שם משתמש וסיסמה",
+      });
+    }
+
+    const users = await sb(
+      `users?select=*&username=eq.${encodeURIComponent(username)}&limit=1`
+    );
+
+    const user = users && users[0];
+
+    if (!user || user.password !== password || user.is_active === false) {
+      return res.json({
+        success: false,
+        message: "שם משתמש או סיסמה שגויים",
+      });
+    }
+
+    return res.json({
+      success: true,
+      user: {
+        id: user.id,
+        username: user.username,
+        full_name: user.full_name || user.username,
+        signature: user.signature || "",
+        permissions: user.permissions || {},
+      },
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "שגיאת שרת",
+    });
+  }
+});
 });
 app.get("/admin", async (req, res) => {
   try {
