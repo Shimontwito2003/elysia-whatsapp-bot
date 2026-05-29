@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Elysia CRM</title>
+  <link rel="stylesheet" href="/admin-static/admin.css" />
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>Elysia CRM</h1>
+      <p>כניסה למערכת ניהול WhatsApp</p>
+
+      <input id="loginUsername" type="text" placeholder="שם משתמש" />
+      <input id="loginPassword" type="password" placeholder="סיסמה" />
+
+      <button onclick="login()">כניסה</button>
+      <div id="loginError" class="login-error"></div>
+
+      <small>משתמש ראשוני: admin / admin123</small>
+    </div>
+  </div>
+
+  <div id="appScreen" class="app hidden">
+    <aside class="sidebar">
+      <div class="brand">
+        <div>
+          <h2>Elysia CRM</h2>
+          <span id="currentUser"></span>
+        </div>
+        <button onclick="logout()" class="ghost-btn">יציאה</button>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-filter="all" onclick="setFilter('all')">הכל</button>
+        <button class="tab" data-filter="unread" onclick="setFilter('unread')">לא נקראו</button>
+        <button class="tab" data-filter="new" onclick="setFilter('new')">חדש</button>
+        <button class="tab" data-filter="active" onclick="setFilter('active')">בטיפול</button>
+        <button class="tab" data-filter="waiting" onclick="setFilter('waiting')">ממתין</button>
+        <button class="tab" data-filter="done" onclick="setFilter('done')">טופל</button>
+        <button class="tab" data-filter="pinned" onclick="setFilter('pinned')">נעוצים</button>
+        <button class="tab" data-filter="vip" onclick="setFilter('vip')">VIP</button>
+        <button class="tab" data-filter="archive" onclick="setFilter('archive')">ארכיון</button>
+      </div>
+
+      <input id="searchInput" class="search" placeholder="חיפוש לקוח, טלפון, הודעה או תג" oninput="loadCustomers()" />
+
+      <div id="chatList" class="chat-list"></div>
+    </aside>
+
+    <main class="chat">
+      <header class="chat-header">
+        <div>
+          <h2 id="chatTitle">בחר שיחה</h2>
+          <span id="chatSubtitle"></span>
+        </div>
+
+        <div class="chat-actions">
+          <button onclick="previousChat()">הקודם</button>
+          <button onclick="nextChat()">הבא</button>
+          <button onclick="toggleCustomerPanel()">פרטי לקוח</button>
+        </div>
+      </header>
+
+      <section id="viewerBar" class="viewer-bar hidden"></section>
+
+      <section id="messagesBox" class="messages-box">
+        <div class="empty-state">בחר לקוח מהרשימה כדי לפתוח צ'אט</div>
+      </section>
+
+      <section id="internalNotesBox" class="internal-notes hidden"></section>
+
+      <footer class="reply-box">
+        <textarea id="replyText" placeholder="כתוב תשובה ללקוח"></textarea>
+
+        <div class="reply-options">
+          <label>
+            <input id="useSignature" type="checkbox" checked />
+            הוסף חתימה
+          </label>
+
+          <select id="quickReplySelect" onchange="applyQuickReply()">
+            <option value="">תשובה מהירה</option>
+            <option value="שלום וברוכים הבאים ל-Elysia Jewellery. איך אפשר לעזור?">ברכה כללית</option>
+            <option value="נציג אנושי יחזור אליך בהקדם. ניתן לכתוב כאן את השאלה.">נציג יחזור</option>
+            <option value="נשמח לעזור בבחירת תכשיט. שלח/י סוג תכשיט, תקציב וסגנון מועדף.">עזרה בבחירה</option>
+            <option value="לשאלה על הזמנה קיימת, שלח/י מספר הזמנה ונבדוק עבורך.">בדיקת הזמנה</option>
+            <option value="תודה שפנית אלינו. הטיפול נסגר, ונשמח לעזור שוב בכל עת.">סיום טיפול</option>
+          </select>
+
+          <button onclick="sendReply()">שלח</button>
+        </div>
+      </footer>
+    </main>
+
+    <aside id="customerPanel" class="customer-panel">
+      <h3>כרטיס לקוח</h3>
+
+      <div class="field">
+        <label>שם לקוח</label>
+        <input id="customerName" placeholder="שם מלא" />
+      </div>
+
+      <div class="field">
+        <label>טלפון</label>
+        <input id="customerPhone" disabled />
+      </div>
+
+      <div class="field">
+        <label>סטטוס</label>
+        <select id="customerStatus">
+          <option value="חדש">חדש</option>
+          <option value="active">בטיפול</option>
+          <option value="waiting">ממתין</option>
+          <option value="done">טופל</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>עדיפות</label>
+        <select id="customerPriority">
+          <option value="normal">רגיל</option>
+          <option value="important">חשוב</option>
+          <option value="urgent">דחוף</option>
+          <option value="vip">VIP</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>תגיות</label>
+        <input id="customerTags" placeholder="טבעת, מתנה, VIP" />
+      </div>
+
+      <div class="field">
+        <label>הערה פנימית</label>
+        <textarea id="customerNote" placeholder="הערה פנימית שלא נשלחת ללקוח"></textarea>
+      </div>
+
+      <button onclick="saveCustomer()">שמור פרטי לקוח</button>
+
+      <div class="customer-actions">
+        <button onclick="pinChat()">נעץ / הסר נעיצה</button>
+        <button onclick="startHandling()">התחל טיפול</button>
+        <button onclick="stopHandling()">סיים טיפול</button>
+        <button onclick="returnToBot()">החזר לבוט</button>
+        <button onclick="archiveChat()">ארכיון</button>
+      </div>
+
+      <div class="info-box">
+        <div>נוצר: <span id="createdAt"></span></div>
+        <div>עודכן: <span id="updatedAt"></span></div>
+        <div>מצב צ'אט: <span id="chatMode"></span></div>
+      </div>
+    </aside>
+  </div>
+
+  <script src="/admin-static/admin.js"></script>
+</body>
+</html>
