@@ -208,6 +208,15 @@ app.post("/api/login", async (req, res) => {
   }
 });
 });
+app.get("/api/customers", async (req, res) => {
+  try {
+    const customers = await getCustomers();
+    return res.json(customers || []);
+  } catch (error) {
+    console.error("API customers error:", error);
+    return res.status(500).json([]);
+  }
+});
 app.get("/admin", async (req, res) => {
   try {
     const search = (req.query.search || "").trim();
